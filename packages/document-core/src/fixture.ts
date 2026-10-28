@@ -1,0 +1,57 @@
+import type { ProjectDocument } from "./index";
+export const uid = (n: number) =>
+  `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+export function fixture(): ProjectDocument {
+  return {
+    schemaVersion: 1,
+    projectId: uid(1),
+    metadata: {
+      name: "Test",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      revision: 0,
+    },
+    characterDefinitions: [],
+    assetReferences: [
+      {
+        id: uid(2),
+        name: "Pixel",
+        provenance: "procedural",
+        kind: "source",
+        dependencies: [],
+        data: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aL1sAAAAASUVORK5CYII=",
+        width: 1,
+        height: 1,
+      },
+    ],
+    layers: [
+      {
+        id: uid(3),
+        assetId: uid(2),
+        parentId: null,
+        name: "Layer",
+        visible: true,
+        locked: false,
+        opacity: 1,
+        x: 0,
+        y: 0,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+      },
+    ],
+    hierarchy: [{ layerId: uid(3), parentId: null }],
+    skeletons: [],
+    bones: [],
+    meshes: [],
+    vertexWeights: [],
+    equipmentSlots: [],
+    attachments: [],
+    animationClips: [],
+    keyframeTracks: [],
+    animationEvents: [],
+    vfxGraphs: [],
+    aiJobReferences: [],
+    revisionHistory: [],
+  };
+}

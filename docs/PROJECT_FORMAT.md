@@ -1,0 +1,7 @@
+# Project format v1
+
+Portable `.a2dstudio` is a ZIP with one `project.json`. UTF-8 JSON stores schemaVersion=1, projectId, metadata, characterDefinitions, assetReferences, layers, hierarchy, skeletons, bones, meshes, vertexWeights, equipmentSlots, attachments, animationClips, keyframeTracks, animationEvents, vfxGraphs, aiJobReferences, revisionHistory. Phase 2+ collections are empty reserved records; no unsupported rig/mesh/animation data is synthesized. Character metadata records the five planned clips and auto rig/mesh/VFX preferences.
+
+Assets contain UUID, name, provenance, PNG/JPEG/WebP data URL, dimensions and explicit dependency IDs. Source assets remain distinct from derived assets. Layers reference assets and have a nullable parentId, name, visibility, lock, opacity, x/y/rotation/scale. Layer array order is back-to-front; hierarchy is validated against the layer parent references. Transform units: pixels, degrees, scalar scale. References, UUID uniqueness, hierarchy cycles and asset cycles are validated.
+
+Migrations: v0 accepts the same fields with schemaVersion=0 and upgrades to v1. Future versions fail explicitly; no lossy downgrade. Import fully validates before replacing the current project. Limits: 20 MiB JSON/ZIP, 24 MiB total decoded images, 8 MiB single image, 4096 pixels per side, 1000 layers, 128 source assets, 256 archive entries, expansion ratio <=200. Archives must contain exactly project.json; encrypted archives rejected. Raster import only. No scripts, remote texture URLs or SVG.

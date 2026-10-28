@@ -1,0 +1,51 @@
+# Created file manifest
+
+All application files are new. No existing tracked source was modified. Dependencies, generated build output and runtime/test scratch files are excluded below.
+
+- `.gitignore`
+- `README.md`
+- `apps/api/jobs.py`
+- `apps/api/main.py`
+- `apps/api/requirements.txt`
+- `apps/api/tests/test_api.py`
+- `apps/web/package.json`
+- `apps/web/src/App.tsx`
+- `apps/web/src/Viewport.tsx`
+- `apps/web/src/demo.ts`
+- `apps/web/src/main.tsx`
+- `apps/web/src/styles.css`
+- `docs/AI_PROVIDER_CONTRACTS.md`
+- `docs/ARCHITECTURE.md`
+- `docs/FILE_MANIFEST.md`
+- `docs/PRODUCT_SPEC.md`
+- `docs/PROJECT_FORMAT.md`
+- `docs/ROADMAP.md`
+- `docs/VALIDATION.md`
+- `eslint.config.js`
+- `index.html`
+- `package-lock.json`
+- `package.json`
+- `packages/ai-contracts/package.json`
+- `packages/ai-contracts/src/index.ts`
+- `packages/animation-core/package.json`
+- `packages/animation-core/src/index.ts`
+- `packages/document-core/package.json`
+- `packages/document-core/src/document.test.ts`
+- `packages/document-core/src/fixture.ts`
+- `packages/document-core/src/index.ts`
+- `packages/editor-core/package.json`
+- `packages/editor-core/src/store.test.ts`
+- `packages/editor-core/src/store.ts`
+- `packages/exporters/package.json`
+- `packages/exporters/src/index.ts`
+- `packages/exporters/src/raster-header.test.ts`
+- `packages/exporters/src/raster-header.ts`
+- `packages/render-core/package.json`
+- `packages/render-core/src/index.ts`
+- `packages/vfx-core/package.json`
+- `packages/vfx-core/src/index.ts`
+- `playwright.config.ts`
+- `tests/editor.spec.ts`
+- `tsconfig.json`
+- `vite.config.ts`
+- `vitest.config.ts`

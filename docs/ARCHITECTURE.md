@@ -1,0 +1,11 @@
+# Architecture decisions
+
+React 19 + TypeScript strict + Vite 6; PixiJS 8 WebGL renderer owns scene nodes/textures and releases them on unmount. Tailwind 4 plus semantic CSS, Radix Dialog for keyboard/focus-safe dialogs. Zustand with Immer stores one validated document and command history. UI viewport/selection state remains separate from serialized content. Every mutation uses the command boundary, updates revision metadata and supports undo/redo. History capped at 80 snapshots. Drag gestures commit once.
+
+`apps/web`: editor UI, panels, document IO. `apps/api`: FastAPI/Pydantic local metadata and file adapter; atomic disk writes, no required external services. `packages/document-core`: strict schema, migrations, dependency invalidation and transforms. `render-core`: shared Pixi scene generation and rasterization. `editor-core`: store and commands. `ai-contracts`: capability registry, job state machine contract, unavailable provider. `exporters`: bounded safe ZIP packaging and raster file validation. `animation-core` and `vfx-core` contain only phase boundaries, not fabricated implementations.
+
+Scene units are design pixels. Layers form an acyclic parent hierarchy; local transforms compose through Pixi containers. World-preserving reparenting is not implemented: changing parent retains local transform. Stable UUIDs identify every entity. Asset source data is embedded and preserved. Replacing source artwork invalidates only explicit transitive dependents. No automatic invalidation of unrelated skeletons.
+
+Hosting decision: local-only because the brief explicitly forbids commits/pushes without permission. The requested Python API is delivered as Python rather than replaced with a Worker. Browser local persistence is independent of optional API storage. Redis/Postgres are reserved configuration contracts, not implemented adapters in Phase 1.
+
+Security: unknown fields rejected; document size/entity/decoded image limits; MIME and signature checks; no SVG imports; inline SVG only internally generated then rasterized to PNG; no archive paths other than exact project.json; ZIP entry count, per-file size and compression ratio checked before decompression. Imported scripts never execute. User data renders as React text. No credentials in client.

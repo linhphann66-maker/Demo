@@ -1,3 +1,33 @@
+import {CharacterBuilder} from './CharacterBuilder';
+import {AISettings} from './AISettings';
+import {ProjectVFX} from '../../../packages/vfx-core/src/project';
+import {useVFXSession} from '../../../packages/editor-core/src/vfx-state';
+import { VFXStudio,VFXSidebar } from './VFXStudio';
+import {VFXTimeline} from './VFXTimeline';
+import { CharacterPanel } from "./CharacterPanel";
+import {
+  layerInView,
+  clipInView,
+  boneInView,
+} from "../../../packages/document-core/src/character";
+import {
+  AnimationLibrary,
+  AnimationInspector,
+  AnimationExport,
+} from "./AnimationStudio";
+import { Timeline } from "./Timeline";
+import { useAnimation } from "../../../packages/editor-core/src/animation-state";
+import { getPreviewDocument } from "../../../packages/editor-core/src/animation-preview";
+import {
+  installPlaybackLoop,
+  selectAnimation,
+} from "../../../packages/editor-core/src/animation-playback";
+import {
+  SkeletonHierarchy,
+  BoneInspector,
+  MeshInspector,
+  LayerRigProperties,
+} from "./RigPanels";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
@@ -24,7 +54,7 @@ import {
   Search,
   X,
   Settings2,
-  SlidersHorizontal,
+  Clapperboard,
   Move,
   RotateCw,
   Trash2,
@@ -119,15 +149,24 @@ function Numeric({
 }
 export function App() {
   const s = useEditor();
+  const animationEnabled = useAnimation((r) => r.enabled),
+    keySelection = useAnimation((r) => r.selectedKeys),
+    eventSelection = useAnimation((r) => r.selectedEventId);
+  useAnimation((r) => r.editVersion);
+  useEffect(() => installPlaybackLoop(), []);
   const doc = s.document;
   const [en, setEn] = useState(false);
   const t = (vi: string, english: string) => (en ? english : vi);
-  const [tab, setTab] = useState<"layers" | "assets">("layers");
+  const [tab, setTab] = useState<
+    "layers" | "assets" | "skeleton" | "animations" | "character" | "vfx"
+  >("layers");
   const [mode, setMode] = useState<"editor" | "ai">("editor");
   const [query, setQuery] = useState("");
   const [exportOpen, setExportOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
   const [help, setHelp] = useState(false);
+  const [builderOpen,setBuilderOpen]=useState(false);
+  const [aiSettingsOpen,setAISettingsOpen]=useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
   const imageInput = useRef<HTMLInputElement>(null),
@@ -142,7 +181,12 @@ export function App() {
       createDemo()
         .then((d) => {
           useEditor.getState().open(d);
-          useEditor.getState().select(d.layers[3].id);
+          useEditor
+            .getState()
+            .select(
+              d.characterParts.find((p) => p.semantic === "torso")?.layerId ??
+                d.layers[3].id,
+            );
           if (error) useEditor.getState().setError(error);
         })
         .catch((e) => useEditor.getState().setError(String(e)));
@@ -161,17 +205,17 @@ export function App() {
       const el = e.target as HTMLElement;
       if (el.matches("input,textarea,select") || el.isContentEditable) return;
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === "s") {
+        if (e.key.toLowerCase() === "s") {
           e.preventDefault();
           if (useEditor.getState().save())
             notify(en ? "Saved locally" : "Đã lưu trên trình duyệt");
         }
-        if (e.key === "z") {
+        if (e.key.toLowerCase() === "z") {
           e.preventDefault();
           if (e.shiftKey) useEditor.getState().redo();
           else useEditor.getState().undo();
         }
-        if (e.key === "y") {
+        if (e.key.toLowerCase() === "y") {
           e.preventDefault();
           useEditor.getState().redo();
         }
@@ -200,7 +244,9 @@ export function App() {
       setBusy(false);
     }
   };
-  const layer = doc?.layers.find((l) => l.id === s.selectedId);
+  const layer = doc
+    ? getPreviewDocument(doc).layers.find((l) => l.id === s.selectedId)
+    : undefined;
   const asset = doc?.assetReferences.find((a) => a.id === layer?.assetId);
   const update = (patch: Partial<Layer>) => {
     if (layer && !layer.locked) s.updateLayer(layer.id, patch);
@@ -217,7 +263,12 @@ export function App() {
     );
   const layers = [...doc.layers]
     .reverse()
-    .filter((l) => l.name.toLowerCase().includes(query.toLowerCase()));
+    .filter(
+      (l) =>
+        layerInView(doc, l.id) &&
+        l.name.toLowerCase().includes(query.toLowerCase()),
+    );
+  const slots = doc.equipmentSlots.filter((s) => boneInView(doc, s.boneId));
   const depth = (l: Layer): number =>
     l.parentId ? 1 + depth(doc.layers.find((p) => p.id === l.parentId)!) : 0;
   return (
@@ -246,7 +297,7 @@ export function App() {
           <span>{doc.metadata.name}</span>
           <ChevronDown size={13} />
         </button>
-        <span className="phase-pill">PHASE 01</span>
+        <span className="phase-pill">SIDE 3/4</span>
         <div className="header-right">
           <button
             className="text-btn language"
@@ -294,6 +345,8 @@ export function App() {
           </button>
         </div>
         <div className="action-buttons">
+          <button className="text-btn" onClick={()=>setAISettingsOpen(true)}>Cài đặt AI</button>
+          <button className="text-btn" onClick={()=>{useAnimation.getState().pause();setBuilderOpen(true);}}><Sparkles size={15}/>Tự động tạo nhân vật</button>
           <button
             className="icon-btn"
             aria-label={t("Hoàn tác", "Undo")}
@@ -366,9 +419,14 @@ export function App() {
           </div>
           <div className="section-title">
             <span>
-              {tab === "layers"
-                ? t("CẤU TRÚC NHÂN VẬT", "CHARACTER STRUCTURE")
-                : t("THƯ VIỆN DỰ ÁN", "PROJECT LIBRARY")}
+              {tab === "skeleton"
+                ? t(
+                    "HỆ XƯƠNG · PROCEDURAL / MANUAL",
+                    "SKELETON · PROCEDURAL / MANUAL",
+                  )
+                : tab === "layers"
+                  ? t("CẤU TRÚC NHÂN VẬT", "CHARACTER STRUCTURE")
+                  : t("THƯ VIỆN DỰ ÁN", "PROJECT LIBRARY")}
             </span>
             <button
               className="icon-btn"
@@ -378,7 +436,13 @@ export function App() {
               <Plus size={15} />
             </button>
           </div>
-          {tab === "layers" ? (
+          {tab === "vfx" ? (<VFXSidebar/>) : tab === "character" ? (
+            <CharacterPanel en={en} />
+          ) : tab === "animations" ? (
+            <AnimationLibrary en={en} />
+          ) : tab === "skeleton" ? (
+            <SkeletonHierarchy en={en} />
+          ) : tab === "layers" ? (
             <div className="layer-tree">
               <div className="tree-root">
                 <ChevronDown size={13} />
@@ -459,8 +523,21 @@ export function App() {
                       const existing = doc.layers.find(
                         (l) => l.assetId === a.id,
                       );
-                      if (existing) s.select(existing.id);
-                      else {
+                      if (existing) {
+                        const view = doc.characterVariants.find((v) =>
+                          v.layerIds.includes(existing.id),
+                        );
+                        if (
+                          view &&
+                          view.view !== doc.characterSettings.characterView
+                        ) {
+                          s.command("Chọn view của tài nguyên", (d) => {
+                            d.characterSettings.characterView = view.view;
+                          });
+                          useAnimation.getState().reset();
+                        }
+                        s.select(existing.id);
+                      } else {
                         const id = crypto.randomUUID();
                         s.command("Tái sử dụng tài nguyên", (d) => {
                           d.layers.push({
@@ -496,6 +573,36 @@ export function App() {
           )}
           <div className="left-bottom">
             <button
+              className={`future-row skeleton-tab ${tab === "character" ? "active" : ""}`}
+              aria-label="Character Direction and Joints"
+              onClick={() => setTab("character")}
+            >
+              <span>
+                <Bone size={14} />
+                Nhân vật / Khớp
+              </span>
+              <small>SIDE 3/4</small>
+            </button>
+            <button
+              className={`future-row skeleton-tab ${tab === "animations" ? "active" : ""}`}
+              onClick={() => {
+                setTab("animations");
+                const id =
+                  useAnimation.getState().activeClipId ??
+                  doc.animationClips.find((c) => clipInView(doc, c.id))?.id;
+                if (id) selectAnimation(id);
+              }}
+            >
+              <span>
+                <Clapperboard size={14} />
+                {t("Hoạt ảnh", "Animations")}
+              </span>
+              <small>
+                {doc.animationClips.filter((c) => clipInView(doc, c.id)).length}{" "}
+                CLIPS
+              </small>
+            </button>
+            <button
               className="import-asset"
               onClick={() => imageInput.current?.click()}
             >
@@ -503,27 +610,42 @@ export function App() {
               {t("Thêm tài nguyên", "Add an asset")}
               <span>PNG, JPG, WEBP</span>
             </button>
-            <div className="future-row">
+            <button
+              className={`future-row skeleton-tab ${tab === "skeleton" ? "active" : ""}`}
+              onClick={() => {
+                setTab("skeleton");
+                s.setTool("bone");
+              }}
+            >
               <span>
                 <Bone size={14} />
                 {t("Bộ xương", "Skeleton")}
               </span>
-              <small>PHASE 02</small>
-            </div>
-            <div className="future-row">
+              <small>
+                {doc.bones.filter((b) => boneInView(doc, b.id)).length} BONES
+              </small>
+            </button>
+            <button
+              className="future-row skeleton-tab"
+              disabled={!slots.length}
+              onClick={() => {
+                setTab("skeleton");
+                s.selectBone(slots[0].boneId);
+              }}
+            >
               <span>
                 <Shirt size={14} />
-                {t("Trang bị", "Equipment")}
+                {t("Trang bị / Socket", "Equipment / Socket")}
               </span>
-              <small>PHASE 02</small>
-            </div>
-            <div className="future-row">
+              <small>{slots.length}</small>
+            </button>
+            <button className="future-row" onClick={()=>setTab("vfx")}>
               <span>
                 <Sparkles size={14} />
                 VFX
               </span>
-              <small>PHASE 04</small>
-            </div>
+              <small>PARTICLES</small>
+            </button>
             <div className="sample-note">
               <span className="sample-dot" />
               {t("Nhân vật mẫu cục bộ", "Local sample character")}
@@ -533,60 +655,7 @@ export function App() {
         </aside>
         <div className="center-column">
           <Viewport en={en} />
-          <section className="timeline">
-            <div className="timeline-head">
-              <span>
-                <SlidersHorizontal size={14} />
-                {t("Hoạt ảnh", "Animation")}
-              </span>
-              <span className="soon-badge">
-                {t("SẮP CÓ · PHASE 03", "PLANNED · PHASE 03")}
-              </span>
-              <span className="timeline-meta">
-                24 FPS <span>·</span> 00:00:00
-              </span>
-            </div>
-            <div className="timeline-body">
-              <div className="clip-list">
-                <span>{t("HOẠT ẢNH DỰ KIẾN", "PLANNED CLIPS")}</span>
-                <div>
-                  {["Idle", "Walk", "Run", "Attack", "Hurt"].map((name, i) => (
-                    <span
-                      className={`clip ${i === 0 ? "clip-current" : ""}`}
-                      key={name}
-                    >
-                      <span className="clip-dot" />
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="timeline-preview">
-                <div className="ruler">
-                  {[
-                    "00f",
-                    "06f",
-                    "12f",
-                    "18f",
-                    "24f",
-                    "30f",
-                    "36f",
-                    "42f",
-                    "48f",
-                  ].map((n) => (
-                    <span key={n}>{n}</span>
-                  ))}
-                </div>
-                <div className="timeline-empty">
-                  <Lock size={14} />
-                  {t(
-                    "Keyframe & phát hoạt ảnh sẽ được triển khai ở Phase 03.",
-                    "Keyframes & playback will be available in Phase 03.",
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
+          {tab==='vfx'?<VFXTimeline/>:<Timeline en={en} />}
         </div>
         <aside className="right-panel">
           <div className="inspector-title">
@@ -599,9 +668,13 @@ export function App() {
             <span className="panel-chip">
               {mode === "ai"
                 ? "AI"
-                : layer
-                  ? t("Lớp", "Layer")
-                  : t("Dự án", "Project")}
+                : s.tool === "bone"
+                  ? t("Xương", "Bone")
+                  : s.tool === "mesh" || s.tool === "weight"
+                    ? "Mesh"
+                    : layer
+                      ? t("Lớp", "Layer")
+                      : t("Dự án", "Project")}
             </span>
           </div>
           {mode === "ai" ? (
@@ -656,6 +729,13 @@ export function App() {
                 {t("Quay lại biên tập", "Back to editor")}
               </button>
             </div>
+          ) : tab === "vfx" ? (<VFXStudio />) : animationEnabled &&
+            (keySelection.length > 0 || eventSelection) ? (
+            <AnimationInspector en={en} />
+          ) : s.tool === "bone" ? (
+            <BoneInspector en={en} />
+          ) : s.tool === "mesh" || s.tool === "weight" ? (
+            <MeshInspector en={en} />
           ) : layer ? (
             <>
               <div className="selected-object">
@@ -869,6 +949,7 @@ export function App() {
                     </button>
                   </div>
                 </section>
+                <LayerRigProperties en={en} />
                 <section className="property-section source-section">
                   <span className="eyebrow">
                     {t("NGUỒN TÀI NGUYÊN", "ASSET PROVENANCE")}
@@ -897,6 +978,8 @@ export function App() {
                 </section>
               </div>
             </>
+          ) : animationEnabled ? (
+            <AnimationInspector en={en} />
           ) : (
             <div className="empty-inspector">
               <MousePointer2 size={28} />
@@ -936,11 +1019,14 @@ export function App() {
           {doc.assetReferences.length} {t("tài nguyên", "assets")}
           <span className="status-divider" />
           WebGL · PixiJS 8<span className="status-divider" />
-          v0.1.0
+          v0.5.1
         </span>
       </footer>
+      {builderOpen&&<CharacterBuilder onClose={()=>setBuilderOpen(false)}/>}
+      {aiSettingsOpen&&<AISettings onClose={()=>setAISettingsOpen(false)}/>}
       <input
         ref={imageInput}
+        aria-label="Import raster image"
         hidden
         type="file"
         accept="image/png,image/jpeg,image/webp"
@@ -1053,7 +1139,8 @@ export function App() {
           disabled={busy}
           onClick={() =>
             void run(async () => {
-              const blob = await exportPng(doc);
+              const clock=useAnimation.getState(),quality=useVFXSession.getState().quality,preview=getPreviewDocument(doc);
+              const blob = await exportPng(preview,new ProjectVFX().frame(doc,clock.enabled?clock.activeClipId:null,clock.enabled?clock.time:0,quality,preview),quality);
               download(blob, doc.metadata.name + ".png", "image/png");
               notify(t("Đã xuất PNG 800 × 800", "PNG exported at 800 × 800"));
               setExportOpen(false);
@@ -1077,10 +1164,11 @@ export function App() {
         </button>
         <p className="subtle-note">
           {t(
-            "Nội dung ngoài khung 800 × 800 sẽ bị cắt trong PNG. Spritesheet và engine export thuộc các giai đoạn sau.",
-            "PNG clips content outside the 800 × 800 artboard. Spritesheet and engine exports are planned for later phases.",
+            "PNG tĩnh cắt theo khung 800×800. Spritesheet tự tính bounds qua các frame; engine export thuộc giai đoạn sau.",
+            "Static PNG clips to 800×800. Spritesheet fits bounds across frames; engine exports are planned for later.",
           )}
         </p>
+        <AnimationExport en={en} />
       </Modal>
       <Modal
         open={projectOpen}
@@ -1133,8 +1221,8 @@ export function App() {
           <Info size={17} />
           <p>
             {t(
-              "Auto rig, mesh và VFX đã được ghi nhận là tùy chọn dự kiến; chưa được thực thi trong Phase 01.",
-              "Auto rig, mesh and VFX are recorded preferences; not executed in Phase 01.",
+              "Auto Rig procedural, FK/IK và mesh đã có trong Phase 02. VFX particle, trail và flipbook đã có trong VFX Studio.",
+              "Procedural auto rig, FK/IK and mesh are available in Phase 02. Editable VFX is available in VFX Studio.",
             )}
           </p>
         </div>

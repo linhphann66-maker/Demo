@@ -1,6 +1,6 @@
 {
   "name": "ai-2d-asset-studio",
-  "version": "0.1.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -10,13 +10,15 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
+    "build:site": "npm run build && node scripts/build-hosted.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint": "eslint apps/web/src packages tests",
+    "lint": "eslint apps/web/src apps/worker packages tests",
     "format": "prettier --write apps/web/src packages tests *.ts *.js docs README.md"
   },
   "dependencies": {
+    "@google/genai": "2.32.0",
     "@radix-ui/react-dialog": "1.1.15",
     "@vitejs/plugin-react": "4.7.0",
     "fflate": "0.8.2",

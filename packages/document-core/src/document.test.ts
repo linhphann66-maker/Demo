@@ -20,8 +20,8 @@ describe("document integrity", () => {
   it("migrates v0 and rejects future versions", () => {
     expect(
       parseDocument({ ...fixture(), schemaVersion: 0 }).schemaVersion,
-    ).toBe(1);
-    expect(() => parseDocument({ ...fixture(), schemaVersion: 2 })).toThrow();
+    ).toBe(4);
+    expect(() => parseDocument({ ...fixture(), schemaVersion: 5 })).toThrow();
   });
   it("rejects duplicate UUIDs, missing assets and unknown fields", () => {
     const d = fixture();

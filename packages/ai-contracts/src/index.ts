@@ -73,3 +73,64 @@ export class ProviderRegistry {
   }
 }
 export const registry = new ProviderRegistry();
+
+/** Provider-independent side-scroller contract. No provider execution is implied. */
+export interface SideCharacterSpec {
+  characterView: "side_3_4";
+  facing: "right";
+  movementMode: "horizontal";
+  fullBody: true;
+  neutralPose: true;
+  separateNearFarLimbs: true;
+  preserveOccludedRegions: true;
+  perspective: "mild";
+}
+export const sideCharacterSpec: SideCharacterSpec = {
+  characterView: "side_3_4",
+  facing: "right",
+  movementMode: "horizontal",
+  fullBody: true,
+  neutralPose: true,
+  separateNearFarLimbs: true,
+  preserveOccludedRegions: true,
+  perspective: "mild",
+};
+export function sideCharacterPrompt(identity: string) {
+  return `${identity}. Side-scrolling 2D game character, 3/4 side view facing right, full body, neutral pose. Separated near/far arms and legs, front/back hair, consistent anatomy, clean silhouette, rig-friendly proportions. Preserve occluded joint/body regions and authored overlap/underlap. Mild perspective only. No front-facing symmetrical stance, no up/down views, no 3D rotation. Deliver editable source textures, alpha masks, anatomical region metadata and completion provenance.`;
+}
+export interface AnatomicalEditRequest {
+  projectId: string;
+  sourceAssetId: string;
+  baseRevision: number;
+  anatomy:
+    | "near_arm"
+    | "far_arm"
+    | "near_leg"
+    | "far_leg"
+    | "hair_front"
+    | "hair_back"
+    | "torso"
+    | "cape"
+    | "armor"
+    | "weapon";
+  preserveSourcePixels: true;
+  preserveOccludedRegions: true;
+  overlapPixels: number;
+  underlapPixels: number;
+  generation: SideCharacterSpec;
+}
+export interface AnatomicalRegionOutput {
+  region: AnatomicalEditRequest["anatomy"];
+  sourceAssetId: string;
+  alphaMaskReference: string;
+  visibleRegionReference: string;
+  occludedRegionReference: string;
+  overlapTextureReference: string;
+  underlapTextureReference: string;
+  pivot: { x: number; y: number };
+  boneReferences: string[];
+  provenance: { provider: string; model: string; seed?: number };
+  editablePatch: unknown;
+  reviewFindings: string[];
+}
+export * from './vfx';

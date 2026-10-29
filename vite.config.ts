@@ -6,6 +6,20 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
+    watch: {
+      ignored: [
+        "**/docs/**",
+        "**/tests/**",
+        "**/work/**",
+        "**/apps/api/**",
+        "**/apps/worker/**",
+        "**/scripts/**",
+        "**/.openai/**",
+        "**/*.test.ts",
+        "**/README.md",
+        "**/AGENTS.md",
+      ],
+    },
     proxy: { "/api": "http://127.0.0.1:8000" },
   },
   build: {

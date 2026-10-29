@@ -135,3 +135,6 @@ export async function importRaster(file: File): Promise<Asset> {
     ...size,
   };
 }
+export {animationMetadata,exportSpritesheet,spritesheetPackage,sheetPlan,compositionBounds} from './animation';
+
+export * from './vfx';

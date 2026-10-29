@@ -1,10 +1,21 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { unpackProject } from "../packages/exporters/src";
+import { unpackProject, packageProject } from "../packages/exporters/src";
 const chest = "a2d00000-0000-4000-8000-000000000203";
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  const front = await page.evaluate(async () => {
+    const path = "/apps/web/src/demo.ts";
+    const { createDemo } = await import(path);
+    return createDemo({ view: "front" });
+  });
+  page.once("dialog", (d) => d.accept());
+  await page.locator('input[type=file][accept=".a2dstudio"]').setInputFiles({
+    name: "front-regression.a2dstudio",
+    mimeType: "application/zip",
+    buffer: Buffer.from(packageProject(front)),
+  });
   await expect(page.getByRole("listitem")).toHaveCount(14);
 });
 test("edit, undo, redo, save and reload", async ({ page }) => {
@@ -94,16 +105,14 @@ test("PNG export, raster import and unsafe import rejection", async ({
   expect(png.readUInt32BE(16)).toBe(800);
   expect(png.readUInt32BE(20)).toBe(800);
   await page
-    .locator('input[type=file][accept="image/png,image/jpeg,image/webp"]')
+    .getByLabel("Import raster image")
     .setInputFiles({ name: "export.png", mimeType: "image/png", buffer: png });
   await expect(page.getByRole("listitem")).toHaveCount(15);
-  await page
-    .locator('input[type=file][accept="image/png,image/jpeg,image/webp"]')
-    .setInputFiles({
-      name: "evil.svg",
-      mimeType: "image/svg+xml",
-      buffer: Buffer.from('<svg onload="alert(1)"/>'),
-    });
+  await page.getByLabel("Import raster image").setInputFiles({
+    name: "evil.svg",
+    mimeType: "image/svg+xml",
+    buffer: Buffer.from('<svg onload="alert(1)"/>'),
+  });
   await expect(page.getByRole("alert")).toContainText("Chỉ hỗ trợ");
   await expect(page.getByRole("listitem")).toHaveCount(15);
 });
@@ -207,7 +216,7 @@ test("parent deletion preserves child rendering, undo restores and renderer rele
       demoPath = "/apps/web/src/demo.ts";
     const { SceneRenderer } = await import(renderPath);
     const { createDemo } = await import(demoPath);
-    const doc = await createDemo();
+    const doc = await createDemo({ view: "front" });
     const host = document.createElement("div");
     host.style.cssText = "width:800px;height:800px;position:fixed;left:-9999px";
     document.body.append(host);

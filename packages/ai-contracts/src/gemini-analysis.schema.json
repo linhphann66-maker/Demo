@@ -1,0 +1,202 @@
+{
+  "$defs": {
+    "AIAnchor": {
+      "additionalProperties": false,
+      "properties": {
+        "candidateId": {
+          "format": "uuid",
+          "title": "Candidateid",
+          "type": "string"
+        },
+        "name": {
+          "enum": [
+            "neck_anchor",
+            "left_shoulder_anchor",
+            "right_shoulder_anchor",
+            "left_hip_anchor",
+            "right_hip_anchor",
+            "neck_base",
+            "scalp_anchor",
+            "shoulder_joint",
+            "hip_joint"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "x": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "candidateId",
+        "name",
+        "x",
+        "y"
+      ],
+      "title": "AIAnchor",
+      "type": "object"
+    },
+    "AIAssignment": {
+      "additionalProperties": false,
+      "properties": {
+        "candidateId": {
+          "format": "uuid",
+          "title": "Candidateid",
+          "type": "string"
+        },
+        "slot": {
+          "enum": [
+            "head",
+            "hair",
+            "torso",
+            "left_arm",
+            "right_arm",
+            "left_leg",
+            "right_leg"
+          ],
+          "title": "Slot",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "lateralityCertain": {
+          "title": "Lateralitycertain",
+          "type": "boolean"
+        },
+        "depth": {
+          "enum": [
+            "near",
+            "far",
+            "unknown"
+          ],
+          "title": "Depth",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "candidateId",
+        "slot",
+        "confidence",
+        "lateralityCertain",
+        "depth",
+        "warnings"
+      ],
+      "title": "AIAssignment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "viewpoint": {
+      "enum": [
+        "side_3_4",
+        "side",
+        "front",
+        "unknown"
+      ],
+      "title": "Viewpoint",
+      "type": "string"
+    },
+    "facing": {
+      "enum": [
+        "right",
+        "left",
+        "unknown"
+      ],
+      "title": "Facing",
+      "type": "string"
+    },
+    "assignments": {
+      "items": {
+        "$ref": "#/$defs/AIAssignment"
+      },
+      "maxItems": 7,
+      "title": "Assignments",
+      "type": "array"
+    },
+    "ambiguousCandidateIds": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "maxItems": 48,
+      "title": "Ambiguouscandidateids",
+      "type": "array"
+    },
+    "missingSlots": {
+      "items": {
+        "enum": [
+          "head",
+          "hair",
+          "torso",
+          "left_arm",
+          "right_arm",
+          "left_leg",
+          "right_leg"
+        ],
+        "type": "string"
+      },
+      "maxItems": 7,
+      "title": "Missingslots",
+      "type": "array"
+    },
+    "renderOrder": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "maxItems": 48,
+      "title": "Renderorder",
+      "type": "array"
+    },
+    "anchors": {
+      "items": {
+        "$ref": "#/$defs/AIAnchor"
+      },
+      "maxItems": 64,
+      "title": "Anchors",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "viewpoint",
+    "facing",
+    "assignments",
+    "ambiguousCandidateIds",
+    "missingSlots",
+    "renderOrder",
+    "anchors",
+    "warnings"
+  ],
+  "title": "Analysis",
+  "type": "object"
+}

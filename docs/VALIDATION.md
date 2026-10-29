@@ -1,4 +1,6 @@
-# Verification report · 2026-10-28
+# Phase 1 verification report · 2026-10-28
+
+Historical Phase 1 evidence. Current results are in `PHASE3_VALIDATION.md`; Phase 2 results remain in `PHASE2_VALIDATION.md`.
 
 Executed in `/workspace/Demo`. No commits or pushes. Original HEAD `3437b36` retained. Existing working tree was empty apart from `.git`; no pre-existing application source was overwritten.
 
@@ -41,3 +43,7 @@ Latest measured 60-layer reload plus property edit: **1421 ms** (wall clock incl
 - Browser Save uses localStorage; the optional Python project API is independently verified and is not automatically synchronized from the UI.
 - API has no authentication and is intended for local development. Redis/PostgreSQL, real AI, rigging/meshes, animation/VFX simulation and engine exporters are outside Phase 1.
 - Public deployment was intentionally not attempted: the brief forbids commits/pushes without permission, and the requested deliverable uses a Python backend. No publication approval was requested because the local implementation is complete.
+
+## Phase 5A–5B continuation
+
+Current executed builder and Phase 1–4 regression results, actual model availability, joint pixel sweeps, limitations, screenshots and publication evidence: [PHASE5AB_VALIDATION.md](PHASE5AB_VALIDATION.md). Implementation scope and manual steps: [PHASE5AB_IMPLEMENTATION.md](PHASE5AB_IMPLEMENTATION.md).

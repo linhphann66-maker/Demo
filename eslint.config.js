@@ -9,6 +9,8 @@ export default ts.config(
     languageOptions: {
       globals: {
         console: "readonly",
+        CustomEvent: "readonly",
+        FrameRequestCallback: "readonly",
         HTMLElement: "readonly",
         BeforeUnloadEvent: "readonly",
         FileReader: "readonly",

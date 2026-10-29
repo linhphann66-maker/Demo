@@ -3,7 +3,20 @@ export const uid = (n: number) =>
   `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 export function fixture(): ProjectDocument {
   return {
-    schemaVersion: 1,
+    schemaVersion: 4,
+    characterSettings: {
+      characterView: "front",
+      defaultFacing: "right",
+      facing: "right",
+      movementMode: "horizontal",
+      mirrorForOppositeDirection: true,
+      enableVerticalFacing: false,
+      worldPosition: { x: 0, y: 0 },
+    },
+    characterVariants: [],
+    characterParts: [],
+    characterJoints: [],
+    jointValidation: null,
     projectId: uid(1),
     metadata: {
       name: "Test",
@@ -42,6 +55,8 @@ export function fixture(): ProjectDocument {
     ],
     hierarchy: [{ layerId: uid(3), parentId: null }],
     skeletons: [],
+    ikTargets: [],
+    rigSettings: { mode: "rest" },
     bones: [],
     meshes: [],
     vertexWeights: [],

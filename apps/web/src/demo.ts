@@ -1,3 +1,6 @@
+import { createSideDemo } from "./sideDemo";
+import { prepareHumanoid } from "../../../packages/editor-core/src/rig-actions";
+import { createReferenceClips } from "../../../packages/animation-core/src";
 import {
   parseDocument,
   type ProjectDocument,
@@ -157,7 +160,9 @@ async function raster(svg: string, w: number, h: number): Promise<string> {
   c.getContext("2d")!.drawImage(image, 0, 0);
   return c.toDataURL("image/png");
 }
-export async function createDemo(): Promise<ProjectDocument> {
+export async function createDemo(
+  options: { rigged?: boolean; view?: "front" | "side_3_4" } = {},
+): Promise<ProjectDocument> {
   const now = "2026-01-01T00:00:00.000Z";
   const assets = await Promise.all(
     shapes.map(async (s, i) => ({
@@ -189,8 +194,8 @@ export async function createDemo(): Promise<ProjectDocument> {
     scaleX: 1,
     scaleY: 1,
   }));
-  return parseDocument({
-    schemaVersion: 1,
+  const base = parseDocument({
+    schemaVersion: 3,
     projectId: uuid(1),
     metadata: {
       name: "Flame Knight",
@@ -216,6 +221,8 @@ export async function createDemo(): Promise<ProjectDocument> {
     layers,
     hierarchy: layers.map((l) => ({ layerId: l.id, parentId: l.parentId })),
     skeletons: [],
+    ikTargets: [],
+    rigSettings: { mode: "rest" },
     bones: [],
     meshes: [],
     vertexWeights: [],
@@ -228,4 +235,10 @@ export async function createDemo(): Promise<ProjectDocument> {
     aiJobReferences: [],
     revisionHistory: [],
   });
+  if (options.rigged === false) return base;
+  const rigged = await prepareHumanoid(base);
+  createReferenceClips(rigged);
+  return options.view === "front"
+    ? parseDocument(rigged)
+    : createSideDemo(parseDocument(rigged));
 }
